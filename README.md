@@ -8,6 +8,7 @@
 - [How Innovation Sandbox on AWS Implements aws-nuke](#how-innovation-sandbox-on-aws-implements-aws-nuke)
   - [Architecture Pattern](#architecture-pattern)
   - [1. Trigger Mechanism](#1-trigger-mechanism)
+  - [Step Functions Execution Flow Diagram](#step-functions-execution-flow-diagram)
   - [2. Step Functions Orchestration](#2-step-functions-orchestration-the-retry-loop)
   - [3. CodeBuild Execution](#3-codebuild-execution-where-aws-nuke-actually-runs)
   - [4. Cross-Account IAM Role Chain](#4-cross-account-iam-role-chain)
@@ -105,6 +106,29 @@ Step Functions (Account Cleaner State Machine)
 
 - An **EventBridge event** (`CleanAccountRequest`) is emitted when an account lease expires or during onboarding.
 - An **EventBridge rule** catches this event and triggers the Account Cleaner Step Function.
+
+### Step Functions Execution Flow Diagram
+
+The following diagram shows the exact state machine execution flow as implemented in the Innovation Sandbox solution, derived from the [source code](https://github.com/aws-solutions/innovation-sandbox-on-aws/blob/main/source/infrastructure/lib/components/account-cleaner/step-function.ts).
+
+![Step Functions Execution Flow](./step-function-execution-flow.png)
+
+**State-by-state walkthrough:**
+
+1. **Initialize Counters** (`Pass`) — Sets `succeeded=0` and `failed=0` execution result counters.
+2. **Initialize Cleanup Lambda** (`LambdaInvoke`) — Runs pre-cleanup logic: checks if cleanup is already in progress, fetches global config (retry counts, wait durations). If this Lambda throws any error, the flow jumps directly to emitting a failure event.
+3. **Cleanup Already In Progress?** (`Choice`) — If `cleanupAlreadyInProgress == true`, the state machine exits with `SUCCESS` immediately (avoids duplicate runs). Otherwise, proceeds to CodeBuild.
+4. **Start CodeBuild** (`Task`, sync) — Launches the CodeBuild project that runs aws-nuke. Passes environment variables (account ID, AppConfig IDs) and waits for completion.
+5. **On CodeBuild success:**
+   - **Increment Success Counter** (`Pass`) — `succeeded += 1`.
+   - **Enough Successful Passes?** (`Choice`) — If `succeeded >= numberOfSuccessfulAttemptsToFinishCleanup` (default: 3), emit success event. Otherwise, wait and re-run CodeBuild.
+   - **Wait Before Rerun** (`Wait`) — Configurable delay (`waitBeforeRerunSuccessfulAttemptSeconds`) before the next pass.
+6. **On CodeBuild failure** (caught error):
+   - **Increment Failure Counter** (`Pass`) — `failed += 1`, resets `succeeded = 0` (consecutive successes must restart).
+   - **Too Many Failures?** (`Choice`) — If `failed < numberOfFailedAttemptsToCancelCleanup`, wait and retry. Otherwise, emit failure event.
+   - **Wait Before Retry** (`Wait`) — Configurable delay (`waitBeforeRetryFailedAttemptSeconds`) before retrying.
+7. **Emit AccountCleanupSuccessful** (`EventBridgePutEvents`) → State machine ends with `SUCCESS`. Account moves to **Available OU**.
+8. **Emit AccountCleanupFailure** (`EventBridgePutEvents`) → State machine ends with `FAILED`. Account moves to **Quarantine OU**.
 
 ### 2. Step Functions Orchestration (the retry loop)
 
