@@ -191,6 +191,8 @@ This two-hop pattern is used because CodeBuild runs in the hub account and needs
 
 ## What You Need for Your Own Account Recycling Solution
 
+**Implementation tasks breakdown:** [ars-tasks.md](./ars-tasks.md)
+
 ### AWS Infrastructure
 
 1. **AWS Organizations** — Accounts must be in an org so you can move them between OUs.
