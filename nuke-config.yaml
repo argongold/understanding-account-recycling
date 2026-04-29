@@ -1,0 +1,141 @@
+regions:
+  - global # further AWS regions will be added dynamically from CleanupConfig
+
+bypass-alias-check-accounts:
+  - "%CLEANUP_ACCOUNT_ID%"
+
+settings:
+  CloudFormationStack:
+    DisableDeletionProtection: true
+    CreateRoleToDeleteStack: true
+  CognitoUserPool:
+    DisableDeletionProtection: true
+  DSQLCluster:
+    DisableDeletionProtection: true
+  DynamoDBTable:
+    DisableDeletionProtection: true
+  EC2Image:
+    IncludeDisabled: true
+    IncludeDeprecated: true
+    DisableDeregistrationProtection: true
+  EC2Instance:
+    DisableStopProtection: true
+    DisableDeletionProtection: true
+  ELBv2:
+    DisableDeletionProtection: true
+  LightsailInstance:
+    ForceDeleteAddOns: true
+  NeptuneCluster:
+    DisableDeletionProtection: true
+  NeptuneInstance:
+    DisableClusterDeletionProtection: true
+    DisableDeletionProtection: true
+  NeptuneGraph:
+    DisableDeletionProtection: true
+  QLDBLedger:
+    DisableDeletionProtection: true
+  QuickSightSubscription:
+    DisableTerminationProtection: true
+  RDSInstance:
+    DisableDeletionProtection: true
+  S3Bucket:
+    BypassGovernanceRetention: true
+    RemoveObjectLegalHold: true
+
+resource-types:
+  excludes:
+    - S3Object # Let the S3Bucket delete all Objects instead of individual objects (optimization)
+    - ConfigServiceConfigurationRecorder
+    - ConfigServiceDeliveryChannel
+
+blocklist:
+  - "%HUB_ACCOUNT_ID%" # placeholder HUB_ACCOUNT_ID will be dynamically replaced during CodeBuild execution
+
+accounts:
+  "%CLEANUP_ACCOUNT_ID%": # placeholder CLEANUP_ACCOUNT_ID will be dynamically replaced during CodeBuild execution
+    filters:
+      CloudFormationStack:
+        - type: glob
+          value: StackSet-Isb-* # protects sandbox account stack set instance from being deleted
+      CloudTrailTrail:
+        - type: glob
+          value: aws-controltower-*
+        - type: exact
+          value: all-org-cloud-trail
+      CloudWatchEventsRule:
+        - property: Name
+          type: glob
+          value: aws-controltower-*
+        - property: Name
+          type: contains
+          value: AWSControlTower
+      IAMRole:
+        - type: exact
+          value: "%CLEANUP_ROLE_NAME%" # placeholder CLEANUP_ROLE_NAME will be dynamically replaced during CodeBuild execution
+        - type: exact
+          value: OrganizationAccountAccessRole
+        - type: glob
+          value: stacksets-exec-*
+        - type: glob
+          value: AWSReservedSSO_*
+        - type: contains
+          value: AWSControlTower
+        - type: glob
+          value: aws-controltower-*
+      IAMRolePolicy:
+        - property: "role:RoleName"
+          type: exact
+          value: "%CLEANUP_ROLE_NAME%" # placeholder CLEANUP_ROLE_NAME will be dynamically replaced during CodeBuild execution
+        - property: "role:RoleName"
+          type: exact
+          value: OrganizationAccountAccessRole
+        - property: "role:RoleName"
+          type: glob
+          value: stacksets-exec-*
+        - type: glob
+          value: AWSReservedSSO_*
+        - property: "role:RoleName"
+          type: contains
+          value: AWSControlTower
+        - property: "role:RoleName"
+          type: glob
+          value: aws-controltower-*
+      IAMRolePolicyAttachment:
+        - property: RoleName
+          type: exact
+          value: "%CLEANUP_ROLE_NAME%" # placeholder CLEANUP_ROLE_NAME will be dynamically replaced during CodeBuild execution
+        - property: RoleName
+          type: exact
+          value: OrganizationAccountAccessRole
+        - property: RoleName
+          type: glob
+          value: stacksets-exec-*
+        - type: glob
+          value: AWSReservedSSO_*
+        - property: RoleName
+          type: contains
+          value: AWSControlTower
+        - property: RoleName
+          type: glob
+          value: aws-controltower-*
+      IAMSAMLProvider:
+        - type: contains
+          value: AWSSSO
+      LambdaFunction:
+        - type: glob
+          value: aws-controltower-*
+      CloudWatchLogsLogGroup:
+        - type: contains
+          value: aws-controltower
+      OSPackage:
+        - type: glob
+          value: pkg-*
+        - type: glob
+          value: G*
+      SNSSubscription:
+        - property: "ARN"
+          type: contains
+          value: "aws-controltower"
+      SNSTopic:
+        - type: glob
+          value: aws-controltower-*

@@ -174,6 +174,7 @@ This two-hop pattern is used because CodeBuild runs in the hub account and needs
 
 ### 5. aws-nuke Configuration
 
+- **Detailed breakdown:** [nuke-config.md](./nuke-config.md)
 - Stored in **AWS AppConfig** as a configuration profile (not a static file).
 - Contains placeholders (`%HUB_ACCOUNT_ID%`, `%CLEANUP_ACCOUNT_ID%`, `%CLEANUP_ROLE_NAME%`) that are replaced at runtime.
 - **Filters are configured** to protect solution-managed resources (so aws-nuke doesn't delete the cleanup role itself or other ISB infrastructure).
