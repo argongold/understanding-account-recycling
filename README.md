@@ -54,7 +54,7 @@ The ekristen fork is the actively maintained successor of the original rebuy-de 
 
 ## Key Features in v3
 
-- **Massive resource coverage** — Supports hundreds of AWS resource types (EC2, S3, IAM, Lambda, RDS, Bedrock, EKS, CloudFormation, and many more).
+- **Massive resource coverage** — Supports hundreds of AWS resource types (EC2, S3, IAM, Lambda, RDS, Bedrock, EKS, CloudFormation, and many more). See [aws-nuke Resource Types](./aws-nuke-resources-types.md) for a detailed breakdown.
 - **Global Filters** — Apply filters across all accounts in a single config block.
 - **Run against all enabled regions** automatically.
 - **Bypass Alias Check** — Skip the account alias safety check when needed.
