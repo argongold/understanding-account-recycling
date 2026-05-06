@@ -5,6 +5,7 @@
 - [What is aws-nuke](#what-is-aws-nuke)
 - [Current State (April 2026)](#current-state-april-2026)
 - [Key Features in v3](#key-features-in-v3)
+- [Alternate Cleanup Tool Options](./alternate-cleanup-tools.md)
 - [How Innovation Sandbox on AWS Implements aws-nuke](#how-innovation-sandbox-on-aws-implements-aws-nuke)
   - [Architecture Pattern](#architecture-pattern)
   - [1. Trigger Mechanism](#1-trigger-mechanism)
